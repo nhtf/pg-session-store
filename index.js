@@ -358,6 +358,32 @@ module.exports = function (session) {
     }
 
     /**
+     * Attempt to fetch all sessions in store
+     *
+     * @param {(err: Error|null, firstRow?: PGStoreQueryResult) => void} fn – a standard Node.js callback returning the parsed session object
+     * @access public
+     */
+    all (fn) {
+      this.query('SELECT sess FROM ' + this.quotedTable() +
+                     ' WHERE expire >= to_timestamp($2)',
+      [currentTimestamp()], (err, data) => {
+        if (err) {
+          return fn(err);
+        }
+        if (!data) {
+          // eslint-disable-next-line unicorn/no-null
+          return fn(null);
+        }
+        try {
+          // eslint-disable-next-line unicorn/no-null
+          return fn(null, (typeof data['sess'] === 'string')
+            ? JSON.parse(data['sess'])
+            : data['sess']);
+        } catch {}
+      });
+    }
+
+    /**
      * Attempt to fetch session by the given `sid`.
      *
      * @param {string} sid – the session id
