@@ -365,7 +365,7 @@ module.exports = function (session) {
      */
     all (fn) {
       this.query('SELECT sess FROM ' + this.quotedTable() +
-                     ' WHERE expire >= to_timestamp($2)',
+                     ' WHERE expire >= to_timestamp($1)',
       [currentTimestamp()], (err, data) => {
         if (err) {
           return fn(err);
