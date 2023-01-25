@@ -1,16 +1,14 @@
 {
-  "name": "connect-pg-simple",
-  "version": "8.0.0",
+  "name": "pg-session-store",
+  "version": "8.0.1",
   "description": "A simple, minimal PostgreSQL session store for Connect/Express",
-  "url": "http://github.com/voxpelli/node-connect-pg-simple",
+  "url": "https://github.com/nhtf/pg-session-store",
   "repository": {
     "type": "git",
-    "url": "git://github.com/voxpelli/node-connect-pg-simple.git"
+    "url": "git@github.com:nhtf/pg-session-store.git"
   },
   "author": {
-    "name": "Pelle Wessman",
-    "email": "pelle@kodfabrik.se",
-    "url": "http://kodfabrik.se/"
+    "name": "NHTF"
   },
   "license": "MIT",
   "dependencies": {
