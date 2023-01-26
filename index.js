@@ -317,6 +317,28 @@ module.exports = function (session) {
      * @returns {Promise<PGStoreQueryResult|undefined>}
      * @access private
      */
+    async _asyncQueryRows (query, params, noTableCreation) {
+      await this._ensureSessionStoreTable(noTableCreation);
+
+      if (this.#pgPromise) {
+        const res = await this.#pgPromise.any(query, params);
+        return res && res[0] ? res[0] : undefined;
+      } else {
+        if (!this.#pool) throw new Error('Pool missing for some reason');
+        const res = await this.#pool.query(query, params);
+        return res && res.rows ? res.rows : undefined;
+      }
+    }
+
+    /**
+     * Query the database.
+     *
+     * @param {string} query - the database query to perform
+     * @param {any[]} [params] - the parameters of the query
+     * @param {boolean} [noTableCreation]
+     * @returns {Promise<PGStoreQueryResult|undefined>}
+     * @access private
+     */
     async _asyncQuery (query, params, noTableCreation) {
       await this._ensureSessionStoreTable(noTableCreation);
 
@@ -328,6 +350,32 @@ module.exports = function (session) {
         const res = await this.#pool.query(query, params);
         return res && res.rows && res.rows[0] ? res.rows[0] : undefined;
       }
+    }
+
+    /**
+     * Query the database.
+     *
+     * @param {string} query - the database query to perform
+     * @param {any[]|PGStoreQueryCallback} [params] - the parameters of the query or the callback function
+     * @param {PGStoreQueryCallback} [fn] - standard Node.js callback returning the resulting rows
+     * @param {boolean} [noTableCreation]
+     * @returns {void}
+     * @access private
+     */
+    queryRows (query, params, fn, noTableCreation) {
+      /** @type {any[]} */
+      let resolvedParams;
+
+      if (typeof params === 'function') {
+        if (fn) throw new Error('Two callback functions set at once');
+        fn = params;
+        resolvedParams = [];
+      } else {
+        resolvedParams = params || [];
+      }
+
+      const result = this._asyncQueryRows(query, resolvedParams, noTableCreation);
+      callbackifyPromiseResolution(result, fn);
     }
 
     /**
@@ -364,9 +412,7 @@ module.exports = function (session) {
      * @access public
      */
     all (fn) {
-      this.query('SELECT sess FROM ' + this.quotedTable() +
-                     ' WHERE expire >= to_timestamp($1)',
-      [currentTimestamp()], (err, data) => {
+      this.queryRows('SELECT * FROM ' + this.quotedTable(), (err, data) => {
         if (err) {
           return fn(err);
         }
@@ -375,10 +421,10 @@ module.exports = function (session) {
           return fn(null);
         }
         try {
+			//console.log(data);
           // eslint-disable-next-line unicorn/no-null
-          return fn(null, (typeof data['sess'] === 'string')
-            ? JSON.parse(data['sess'])
-            : data['sess']);
+          //return fn(null, data.flatMap(session => (typeof session['sess'] === 'string' ? JSON.parse(session['sess']) : session['sess'])));
+          return fn(null, data);
         } catch {}
       });
     }
