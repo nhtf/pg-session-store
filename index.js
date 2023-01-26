@@ -421,9 +421,7 @@ module.exports = function (session) {
           return fn(null);
         }
         try {
-			//console.log(data);
           // eslint-disable-next-line unicorn/no-null
-          //return fn(null, data.flatMap(session => (typeof session['sess'] === 'string' ? JSON.parse(session['sess']) : session['sess'])));
           return fn(null, data);
         } catch {}
       });
